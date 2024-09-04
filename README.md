@@ -14,6 +14,9 @@ SO wha is a time line. Well it usually relates to a phenomenon of some duration 
 Th isis enough for a time line. However, this makes for only one time interval and so is trivial when just considering one time line. Of course when comparing two opr more 
 timelines, one time interval is often interesting, but for looking within one timeline, at least two time intervals would be needed, and that requires three timepoints.
 
+# watch for print friendliness!
+Simple black and white is alredy something. No colours thanks.
+
 # grid2v.c
 this taken cfrom cairobegs, A useful building block.
 Note the struct d_t with the 1D distance paramerization

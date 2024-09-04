@@ -67,7 +67,10 @@ void setstartend(cairo_t *cr, d_t *pt, int hbarnums, double hbo4)
     cairo_close_path(cr);
     cairo_fill(cr);
 
-    cairo_rectangle(cr, pt[hbarnums*2-2].p.x-hbotiny, pt[hbarnums*2-2].p.y-hbotiny, hbotiny*2, hbotiny*2);
+    if(hbarnums%2==0)
+        cairo_rectangle(cr, pt[hbarnums*2-2].p.x-hbotiny, pt[hbarnums*2-2].p.y-hbotiny, hbotiny*2, hbotiny*2);
+    else 
+        cairo_rectangle(cr, pt[hbarnums*2-1].p.x-hbotiny, pt[hbarnums*2-1].p.y-hbotiny, hbotiny*2, hbotiny*2);
     cairo_fill(cr);
 }
 
@@ -94,11 +97,12 @@ void setgrill(cairo_t *cr, d_t *pt, int hbarnums, double radi)
 
 int main (int argc, char *argv[])
 {
-	if(argc!=2) {
-		printf("Usage. Pls supply 1 argument: integer - number of horizontal bars.\n");
+	if(argc!=3) {
+		printf("Usage. Pls supply 2 argx: 1) integer - number of horizontal bars. 2) integer between 0 and 100 to find.\n");
 		exit(EXIT_FAILURE);
 	}
     int hbarnums=atoi(argv[1]);
+    int myp=atoi(argv[2]);
     int i, j;
 
     // we start with the canvas. Set up surface, set bg etc.
@@ -165,7 +169,7 @@ int main (int argc, char *argv[])
             pt[i].t=CURVEL;
             pt[i].d=pt[i-1].d + M_PI*radi*OURMAX/tglen;
         }
-        printf("(%2.4f,%i)\n", pt[i].d, pt[i].t); 
+        printf("(%2.4f,%i)@ (%2.4f,%2.4f)\n", pt[i].d, pt[i].t, pt[i].p.x, pt[i].p.y);
     }
 
     // we use background ligh and darks grey arrows to emphasise direction of our grill.
@@ -175,6 +179,61 @@ int main (int argc, char *argv[])
     setgrill(cr, pt, hbarnums, radi);
     // we put an arrow at start and square at end.
     setstartend(cr, pt, hbarnums, hbo4);
+
+    // find point
+    for(i=0;i<2*hbarnums;i++) {
+        if(myp>pt[i].d)
+            continue;
+        else
+            break;
+    }
+    int pidx=i;
+    printf("myp (%i) found btwn idx %i (type %i, dist %2.4f) and idx %i (type %i, dist %2.4f)\n", myp, pidx-1, pt[pidx-1].t, pt[pidx-1].d, pidx, pt[pidx].t, pt[pidx].d);
+    // we're depnding oon final value of i
+    // fracd; // is calculated in terms of distance, but must be converted to pixel distance via .x and .y
+    pos_t mpt, mpt2; // the poistion of the point pixelwise.
+    double fracd=((double)myp - pt[pidx-1].d) / (pt[pidx].d - pt[pidx-1].d); // fraction of distance, this can then be multiplid by pixel distance btwn nearest points
+    printf("fracd=%2.6f\n", fracd); 
+    cairo_set_source_rgba(cr, 0.65, 0.8, 0.45, 1);
+    switch(pt[pidx].t) {
+        case LINE2R:
+            mpt.x=pt[pidx-1].p.x + fracd * (pt[pidx].p.x - pt[pidx-1].p.x);
+            mpt.y=pt[pidx-1].p.y;
+            cairo_move_to(cr, mpt.x, mpt.y-hbo4);
+            cairo_line_to(cr, mpt.x, mpt.y);
+            cairo_stroke(cr);
+            break;
+        case LINE2L:
+            mpt.x=pt[pidx-1].p.x + (1-fracd) * (pt[pidx].p.x - pt[pidx-1].p.x); // reverse direction, therefore 1-fracp
+            mpt.y=pt[pidx-1].p.y;
+            cairo_move_to(cr, mpt.x, mpt.y-hbo4);
+            cairo_line_to(cr, mpt.x, mpt.y);
+            cairo_stroke(cr);
+            break;
+        case CURVER:
+            printf("CurveR angle in rads=%2.6f in degrees=%2.6f\n", fracd*M_PI, fracd*180);
+            mpt.x=pt[pidx-1].p.x + radi*sin(fracd*M_PI);
+            mpt.y=pt[pidx-1].p.y + radi*(1-cos(fracd*M_PI));
+            printf("sin:%2.6f\n", radi*sin(fracd*M_PI));
+            printf("cos:%2.6f\n", radi*cos(fracd*M_PI));
+            mpt2.x=pt[pidx-1].p.x + hbo4*sin(fracd*M_PI);
+            mpt2.y=pt[pidx-1].p.y + hbo4*cos(fracd*M_PI);
+            cairo_move_to(cr, mpt.x, mpt.y);
+            cairo_line_to(cr, mpt2.x, mpt2.y);
+            cairo_stroke(cr);
+            break;
+        case CURVEL:
+            printf("CurveL angle in rads=%2.6f in degrees=%2.6f\n", fracd*M_PI, fracd*180);
+            mpt.x=pt[pidx].p.x - radi*sin(fracd*M_PI); // yes, know, tricky, p-1 is on the other side.
+            mpt.y=pt[pidx-1].p.y + radi*(1-cos(fracd*M_PI));
+            mpt2.x=pt[pidx-1].p.x - hbo4*sin(fracd*M_PI);
+            mpt2.y=pt[pidx-1].p.y + hbo4*(1-cos(fracd*M_PI));
+            cairo_move_to(cr, mpt.x, mpt.y);
+            cairo_line_to(cr, mpt2.x, mpt2.y);
+            cairo_stroke(cr);
+            break;
+    }
+    printf("p-1.x=%2.4f, p-1.y=%2.4f p.x=%2.4f p.y=%2.4f\n", pt[pidx-1].p.x, pt[pidx-1].p.y, pt[pidx].p.x, pt[pidx].p.y);
 
     /* Write output and clean up */
     cairo_surface_write_to_png (surface, "grid2vp.png");
