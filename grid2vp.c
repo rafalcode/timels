@@ -212,25 +212,27 @@ int main (int argc, char *argv[])
             break;
         case CURVER:
             printf("CurveR angle in rads=%2.6f in degrees=%2.6f\n", fracd*M_PI, fracd*180);
-            mpt.x=pt[pidx-1].p.x + radi*sin(fracd*M_PI);
-            mpt.y=pt[pidx-1].p.y + radi*(1-cos(fracd*M_PI));
+            // mpt.x=pt[pidx-1].p.x + radi*sin(fracd*M_PI);
+            // mpt.y=pt[pidx-1].p.y + radi*(1-cos(fracd*M_PI));
+            mpt.x=radi*cos(fracd*M_PI); // yes, this is *good* way because we will first move to notional centre.
+            mpt.y=radi*sin(fracd*M_PI);
             printf("sin:%2.6f\n", radi*sin(fracd*M_PI));
             printf("cos:%2.6f\n", radi*cos(fracd*M_PI));
             mpt2.x=pt[pidx-1].p.x + hbo4*sin(fracd*M_PI);
             mpt2.y=pt[pidx-1].p.y + hbo4*cos(fracd*M_PI);
-            cairo_move_to(cr, mpt.x, mpt.y);
-            cairo_line_to(cr, mpt2.x, mpt2.y);
+            cairo_move_to(cr, pt[pidx-1].p.x, pt[pidx-1].p.y+radi); // notional centre
+            cairo_rel_line_to(cr, mpt.x, mpt.y);
             cairo_stroke(cr);
             break;
         case CURVEL:
             printf("CurveL angle in rads=%2.6f in degrees=%2.6f\n", fracd*M_PI, fracd*180);
             mpt.x=pt[pidx].p.x - radi*sin(fracd*M_PI); // yes, know, tricky, p-1 is on the other side.
             mpt.y=pt[pidx-1].p.y + radi*(1-cos(fracd*M_PI));
-            mpt2.x=pt[pidx-1].p.x - hbo4*sin(fracd*M_PI);
-            mpt2.y=pt[pidx-1].p.y + hbo4*(1-cos(fracd*M_PI));
             cairo_move_to(cr, mpt.x, mpt.y);
             cairo_line_to(cr, mpt2.x, mpt2.y);
             cairo_stroke(cr);
+            break;
+        default:
             break;
     }
     printf("p-1.x=%2.4f, p-1.y=%2.4f p.x=%2.4f p.y=%2.4f\n", pt[pidx-1].p.x, pt[pidx-1].p.y, pt[pidx].p.x, pt[pidx].p.y);
