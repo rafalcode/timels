@@ -10,6 +10,12 @@ EXECUTABLES=grid2v grid2vs grid2vp gribb
 # actually this is pretty good:
 grid2v: grid2v.c
 	${CC} ${CFLAGS} -o $@ $^ ${SPECLIBS}
+
+# found it all quite confusing, so I am looking at remodelling.
+# the naming is also tedious
+g0: g0.c
+	${CC} ${CFLAGS} -o $@ $^ ${SPECLIBS}
+
 # establishing sections.
 grid2vs: grid2vs.c
 	${CC} ${CFLAGS} -o $@ $^ ${SPECLIBS}
